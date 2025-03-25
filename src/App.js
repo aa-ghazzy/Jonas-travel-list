@@ -1,17 +1,39 @@
 import { useState } from "react";
 
-const initialItems = [
-  { id: 1, description: "Passports", quantity: 2, packed: false },
-  { id: 2, description: "Socks", quantity: 12, packed: false },
-  { id: 3, description: "Shoes", quantity: 2, packed: true },
-];
+// const initialItems = [
+//   { id: 1, description: "Passports", quantity: 2, packed: false },
+//   { id: 2, description: "Socks", quantity: 12, packed: false },
+//   { id: 3, description: "Shoes", quantity: 2, packed: true },
+// ];
 
 export default function App() {
+  const [items, setItems] = useState([]);
+
+  function handlerAddItems(item) {
+    setItems((items) => [...items, item]);
+  }
+
+  function handlerDeleteItem(id) {
+    setItems(items.filter((item) => item.id !== id));
+  }
+
+  function handlerCheckedItem(id) {
+    setItems((items) =>
+      items.map((item) =>
+        item.id === id ? { ...item, packed: !item.packed } : item
+      )
+    );
+  }
+
   return (
     <div className="app">
       <Header />
-      <Form />
-      <TravelList />
+      <Form items={items} onAddingItems={(item) => handlerAddItems(item)} />
+      <TravelList
+        items={items}
+        onDeleteItem={(id) => handlerDeleteItem(id)}
+        onCheckedItem={(id) => handlerCheckedItem(id)}
+      />
       <Stats />
     </div>
   );
@@ -25,24 +47,25 @@ function Header() {
   );
 }
 
-function Form() {
+function Form({ items, onAddingItems }) {
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState(1);
 
-  function formHandler(e) {
+  function handlerForm(e) {
     e.preventDefault();
 
     if (!description) return;
-
     const newItem = { description, quantity, packed: false, id: Date.now() };
     console.log(newItem);
+
+    onAddingItems(newItem);
 
     setDescription("");
     setQuantity(1);
   }
 
   return (
-    <form className="add-form" onSubmit={formHandler}>
+    <form className="add-form" onSubmit={handlerForm}>
       <h3>What do you need for your 😍 trip?</h3>
       <select
         value={quantity}
@@ -65,30 +88,41 @@ function Form() {
   );
 }
 
-function TravelList() {
+function TravelList({ items, onDeleteItem, onCheckedItem }) {
   return (
     <div className="list">
       <ul>
-        {initialItems.map((item) => (
-          <Item item={item} key={item.id} />
+        {items.map((item) => (
+          <Item
+            key={item.id}
+            item={item}
+            onDeleteItem={onDeleteItem}
+            onCheckedItem={onCheckedItem}
+          />
         ))}
       </ul>
     </div>
   );
 }
 
-function Item({ item }) {
+function Item({ item, onDeleteItem, onCheckedItem }) {
   return (
     <li>
+      {
+        <input
+          type="checkbox"
+          value={item.packed}
+          onChange={() => onCheckedItem(item.id)}
+        />
+      }
       <span
         id={item.id}
         key={item.id}
         style={item.packed ? { textDecoration: "line-through" } : {}}
       >
-        {/* {<input type="checkbox" />} */}
         {item.quantity}: {item.description}
       </span>
-      <button>❌</button>
+      <button onClick={() => onDeleteItem(item.id)}>❌</button>
     </li>
   );
 }
